@@ -48,6 +48,11 @@ const logger = Logger.getLogger(__filename);
  */
 const USER_MEDIA_SLOW_PROMISE_TIMEOUT = 1000;
 
+
+const _log = (...msg)  => {
+    console.log('|JitsiMeetJS|', ...msg);
+};
+
 /**
  * Gets the next lowest desirable resolution to try for a camera. If the given
  * resolution is already the lowest acceptable resolution, returns {@code null}.
@@ -293,6 +298,7 @@ export default _mergeNamespaceAndModule({
         Logger.setGlobalOptions(options);
     },
 
+
     /**
      * Creates the media tracks and returns them trough the callback.
      *
@@ -334,6 +340,8 @@ export default _mergeNamespaceAndModule({
      * JitsiConferenceError if rejected.
      */
     createLocalTracks(options = {}, oldfirePermissionPromptIsShownEvent, originalOptions) {
+        _log('createLocalTracks', oldfirePermissionPromptIsShownEvent, originalOptions);
+        
         let promiseFulfilled = false;
 
         const { firePermissionPromptIsShownEvent, fireSlowPromiseEvent, ...restOptions } = options;
@@ -359,6 +367,8 @@ export default _mergeNamespaceAndModule({
 
         return RTC.obtainAudioAndVideoPermissions(restOptions)
             .then(tracks => {
+                _log('tracks', tracks);
+
                 promiseFulfilled = true;
 
                 window.connectionTimes['obtainPermissions.end']

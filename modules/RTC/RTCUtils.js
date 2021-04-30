@@ -100,6 +100,12 @@ const isAudioOutputDeviceChangeAvailable
 let availableDevices = [];
 let availableDevicesPollTimer;
 
+
+function _log(...msg) {
+    console.log('|RTCUtils|', ...msg);
+}
+
+
 /**
  * An empty function.
  */
@@ -656,6 +662,7 @@ function onMediaDevicesListChanged(devicesReceived) {
  * @returns {*[]} object that describes the new streams
  */
 function handleLocalStream(streams, resolution) {
+    _log('handleLocalStream', streams, resolution);
     let audioStream, desktopStream, videoStream;
     const res = [];
 
@@ -682,6 +689,7 @@ function handleLocalStream(streams, resolution) {
             }
 
             const videoTracks = audioVideo.getVideoTracks();
+            _log('videoTracks', videoTracks);
 
             if (videoTracks.length) {
                 videoStream = new MediaStream();
@@ -828,7 +836,14 @@ class RTCUtils extends Listenable {
 
         if (this.isDeviceListAvailable()) {
             this.enumerateDevices(ds => {
+                _log('enumerateDevices', ds);
+                ds.forEach(function(device) {
+                    _log(device.kind + ": " + device.label +
+                                " id = " + device.deviceId);
+                  });
+
                 availableDevices = ds.slice(0);
+                _log('availableDevices', availableDevices);
 
                 logger.debug('Available devices: ', availableDevices);
                 sendDeviceListToAnalytics(availableDevices);
@@ -890,6 +905,7 @@ class RTCUtils extends Listenable {
     * on failure.
     **/
     getUserMediaWithConstraints(um, options = {}) {
+        _log('getUserMediaWithConstraints');
         const {
             timeout,
             ...otherOptions
@@ -911,6 +927,7 @@ class RTCUtils extends Listenable {
      * @returns {Promise}
      */
     _getUserMedia(umDevices, constraints = {}, timeout = 0) {
+        _log('_getUserMedia');
         return new Promise((resolve, reject) => {
             let gumTimeout, timeoutExpired = false;
 
@@ -922,8 +939,10 @@ class RTCUtils extends Listenable {
                 }, timeout);
             }
 
+            _log('navigator.mediaDevices.getUserMedia', constraints);
             navigator.mediaDevices.getUserMedia(constraints)
                 .then(stream => {
+                    _log('_getUserMedia success', stream);
                     logger.log('onUserMediaSuccess');
                     updateGrantedPermissions(umDevices, stream);
                     if (!timeoutExpired) {
@@ -1001,6 +1020,8 @@ class RTCUtils extends Listenable {
      * @returns {*} Promise object that will receive the new JitsiTracks
      */
     obtainAudioAndVideoPermissions(options = {}) {
+        _log('obtainAudioAndVideoPermissions', options);
+
         options.devices = options.devices || [ ...OLD_GUM_DEFAULT_DEVICES ];
         options.resolution = options.resolution || OLD_GUM_DEFAULT_RESOLUTION;
 
@@ -1011,8 +1032,8 @@ class RTCUtils extends Listenable {
                 new Error('Desktop sharing is not supported!'));
         }
 
-        return this._getAudioAndVideoStreams(options).then(streams =>
-            handleLocalStream(streams, options.resolution));
+        return this._getAudioAndVideoStreams(options)
+            .then(streams => handleLocalStream(streams, options.resolution));
     }
 
     /**
@@ -1025,6 +1046,8 @@ class RTCUtils extends Listenable {
      * success or a JitsiTrackError on failure.
      */
     _getAudioAndVideoStreams(options) {
+        _log('_getAudioAndVideoStreams', options);
+
         const requestingDesktop = options.devices.includes('desktop');
 
         options.devices = options.devices.filter(device =>
@@ -1036,6 +1059,8 @@ class RTCUtils extends Listenable {
 
         return gumPromise
             .then(avStream => {
+                _log('avStream', avStream);
+
                 // If any requested devices are missing, call gum again in
                 // an attempt to obtain the actual error. For example, the
                 // requested video device is missing or permission was
@@ -1060,6 +1085,8 @@ class RTCUtils extends Listenable {
                 return avStream;
             })
             .then(audioVideo => {
+                _log('audioVideo', audioVideo);
+
                 if (!requestingDesktop) {
                     return { audioVideo };
                 }
@@ -1072,6 +1099,7 @@ class RTCUtils extends Listenable {
                 }
 
                 return new Promise((resolve, reject) => {
+                    _log('screenObtainer.obtainStream')
                     screenObtainer.obtainStream(
                         this._parseDesktopSharingOptions(options),
                         desktop => resolve({
@@ -1100,6 +1128,7 @@ class RTCUtils extends Listenable {
      * array will be empty if all requestedDevices are found in the stream.
      */
     _getMissingTracks(requestedDevices = [], stream) {
+        _log('_getMissingTracks');
         const missingDevices = [];
 
         const audioDeviceRequested = requestedDevices.includes('audio');
@@ -1157,6 +1186,7 @@ class RTCUtils extends Listenable {
      * handling.
      */
     newObtainAudioAndVideoPermissions(options) {
+        _log('newObtainAudioAndVideoPermissions', options);
         logger.info('Using the new gUM flow');
 
         const {

@@ -39,6 +39,8 @@ let rtcTrackIdCounter = 0;
  * @param options
  */
 function createLocalTracks(tracksInfo, options) {
+    console.log('createLocalTracks', tracksInfo, options);
+    
     const newTracks = [];
     let deviceId = null;
 
@@ -79,6 +81,8 @@ function createLocalTracks(tracksInfo, options) {
  * }}
  */
 function _newCreateLocalTracks(mediaStreamMetaData = []) {
+    console.log('_newCreateLocalTracks', mediaStreamMetaData);
+
     return mediaStreamMetaData.map(metaData => {
         const {
             sourceId,
@@ -227,6 +231,10 @@ export default class RTC extends Listenable {
         return _newCreateLocalTracks(tracksInfo);
     }
 
+    static _log(...msg) {
+        console.log('|RTC|', ...msg);
+    }
+
     /**
      * Creates the local MediaStreams.
      * @param {object} [options] Optional parameters.
@@ -237,6 +245,8 @@ export default class RTC extends Listenable {
      * @returns {*} Promise object that will receive the new JitsiTracks
      */
     static obtainAudioAndVideoPermissions(options) {
+        RTC._log('obtainAudioAndVideoPermissions', options);
+
         const usesNewGumFlow = browser.usesNewGumFlow();
         const obtainMediaPromise = usesNewGumFlow
             ? RTCUtils.newObtainAudioAndVideoPermissions(options)
